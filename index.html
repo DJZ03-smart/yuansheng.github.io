@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可分享电子图册</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#10B981',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .album-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 1.5rem;
+            }
+            .photo-card {
+                transition: all 0.3s ease;
+            }
+            .photo-card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 12px 20px -10px rgba(99, 102, 241, 0.25);
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-dark font-sans">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-share-alt text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-primary">共享图册</h1>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="hover:text-primary transition-colors duration-200">我的图册</a>
+                <a href="#" class="hover:text-primary transition-colors duration-200">共享给我</a>
+                <a href="#" class="hover:text-primary transition-colors duration-200">最近浏览</a>
+                <a href="#" class="hover:text-primary transition-colors duration-200">帮助</a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button id="shareBtn" class="hidden md:flex items-center space-x-1 bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary/90 transition-colors">
+                    <i class="fa fa-share-alt"></i>
+                    <span>分享图册</span>
+                </button>
+                <div class="relative">
+                    <button id="userMenuBtn" class="flex items-center space-x-2 focus:outline-none">
+                        <img src="https://picsum.photos/id/64/40/40" alt="用户头像" class="w-8 h-8 rounded-full object-cover border-2 border-primary/20">
+                        <span class="hidden md:inline">我的账户</span>
+                        <i class="fa fa-chevron-down text-xs"></i>
+                    </button>
+                </div>
+                <button id="mobileMenuBtn" class="md:hidden p-2 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-bars"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="md:hidden hidden bg-white border-t">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="#" class="py-2 hover:text-primary transition-colors duration-200">我的图册</a>
+                <a href="#" class="py-2 hover:text-primary transition-colors duration-200">共享给我</a>
+                <a href="#" class="py-2 hover:text-primary transition-colors duration-200">最近浏览</a>
+                <a href="#" class="py-2 hover:text-primary transition-colors duration-200">帮助</a>
+                <button class="flex items-center space-x-1 bg-primary text-white px-3 py-2 rounded-lg hover:bg-primary/90 transition-colors w-fit">
+                    <i class="fa fa-share-alt"></i>
+                    <span>分享图册</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 pt-24 pb-16">
+        <!-- 图册标题和信息 -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8 mb-10 fade-in">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <div class="flex items-center space-x-3 mb-2">
+                        <span class="bg-primary/10 text-primary text-xs px-3 py-1 rounded-full">家庭相册</span>
+                        <span class="text-gray-500 text-sm"><i class="fa fa-eye mr-1"></i> 128次浏览</span>
+                    </div>
+                    <h2 class="text-[clamp(1.5rem,3vw,2.2rem)] font-bold mb-3">2023年家庭旅行记录</h2>
+                    <p class="text-gray-600 max-w-2xl mb-4">这是我们全家在2023年暑假旅行的照片合集，包含了山川湖海的美丽景色和家人的欢乐瞬间。</p>
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex items-center -space-x-2">
+                            <img src="https://picsum.photos/id/64/40/40" alt="成员1" class="w-8 h-8 rounded-full border-2 border-white">
+                            <img src="https://picsum.photos/id/65/40/40" alt="成员2" class="w-8 h-8 rounded-full border-2 border-white">
+                            <img src="https://picsum.photos/id/66/40/40" alt="成员3" class="w-8 h-8 rounded-full border-2 border-white">
+                            <span class="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs font-medium">+2</span>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            <i class="fa fa-calendar mr-1"></i> 更新于 2023-09-15
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="shareBtnMobile" class="flex items-center justify-center space-x-2 bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary/90 transition-colors">
+                        <i class="fa fa-share-alt"></i>
+                        <span>分享图册</span>
+                    </button>
+                    <button class="flex items-center justify-center space-x-2 bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fa fa-download"></i>
+                        <span>下载全部</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 分享弹窗 -->
+        <div id="shareModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+            <div class="bg-white rounded-xl w-full max-w-md p-6 transform transition-all">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-xl font-bold">分享这个图册</h3>
+                    <button id="closeShareModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- 分享链接（已替换为实际部署地址） -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">分享链接</label>
+                    <div class="flex">
+                        <input type="text" value="https://yourusername.github.io/photo-album" readonly 
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <button id="copyLinkBtn" class="bg-primary text-white px-4 py-2 rounded-r-lg hover:bg-primary/90 transition-colors">
+                            复制
+                        </button>
+                    </div>
+                    <p id="copySuccess" class="hidden mt-2 text-sm text-green-600"><i class="fa fa-check-circle"></i> 链接已复制到剪贴板</p>
+                </div>
+                
+                <!-- 权限设置 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">访问权限</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="permission" value="anyone" checked class="text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm">任何人可查看</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="permission" value="password" class="text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm">需要密码</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 社交媒体分享 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">通过社交平台分享</label>
+                    <div class="flex justify-between">
+                        <button class="share-platform bg-[#1877F2] text-white w-12 h-12 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" data-platform="facebook">
+                            <i class="fa fa-facebook"></i>
+                        </button>
+                        <button class="share-platform bg-[#1DA1F2] text-white w-12 h-12 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" data-platform="twitter">
+                            <i class="fa fa-twitter"></i>
+                        </button>
+                        <button class="share-platform bg-[#25D366] text-white w-12 h-12 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" data-platform="whatsapp">
+                            <i class="fa fa-whatsapp"></i>
+                        </button>
+                        <button class="share-platform bg-[#EA4335] text-white w-12 h-12 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" data-platform="instagram">
+                            <i class="fa fa-instagram"></i>
+                        </button>
+                        <button class="share-platform bg-[#0077B5] text-white w-12 h-12 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" data-platform="linkedin">
+                            <i class="fa fa-linkedin"></i>
+                        </button>
+                        <button class="share-platform bg-[#7B61FF] text-white w-12 h-12 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" data-platform="email">
+                            <i class="fa fa-envelope"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 分享成功提示 -->
+        <div id="shareSuccessToast" class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden items-center z-50 fade-in">
+            <i class="fa fa-check-circle mr-2"></i>
+            <span>分享成功！</span>
+        </div>
+        
+        <!-- 分类筛选 -->
+        <div class="flex flex-wrap justify-between items-center mb-8">
+            <h3 class="text-lg font-semibold mb-4 md:mb-0">照片列表</h3>
+            <div class="flex flex-wrap gap-2">
+                <button class="category-btn bg-primary text-white px-4 py-2 rounded-full text-sm">全部</button>
+                <button class="category-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-primary/10 transition-colors">自然风光</button>
+                <button class="category-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-primary/10 transition-colors">人物合影</button>
+                <button class="category-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-primary/10 transition-colors">美食</button>
+                <button class="category-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-primary/10 transition-colors">建筑</button>
+            </div>
+        </div>
+        
+        <!-- 图片网格 -->
+        <div class="album-grid" id="photoGrid">
+            <!-- 图片将通过JavaScript动态生成 -->
+        </div>
+        
+        <!-- 加载更多按钮 -->
+        <div class="text-center mt-12">
+            <button id="loadMoreBtn" class="bg-white border border-primary text-primary hover:bg-primary hover:text-white transition-colors duration-300 px-6 py-3 rounded-lg font-medium flex items-center mx-auto">
+                <span>加载更多照片</span>
+                <i class="fa fa-refresh ml-2"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- 图片查看器模态框 -->
+    <div id="photoModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
+        <div class="relative max-w-5xl w-full">
+            <button id="closeModal" class="absolute -top-12 right-0 text-white text-2xl hover:text-gray-300 transition-colors">
+                <i class="fa fa-times"></i>
+            </button>
+            
+            <button id="prevBtn" class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-10 bg-black/50 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors">
+                <i class="fa fa-chevron-left"></i>
+            </button>
+            <button id="nextBtn" class="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-10 bg-black/50 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors">
+                <i class="fa fa-chevron-right"></i>
+            </button>
+            
+            <div class="bg-white p-1 rounded-lg">
+                <img id="modalImage" src="" alt="大图预览" class="max-h-[80vh] w-full object-contain">
+            </div>
+            
+            <div class="mt-4 text-white">
+                <h3 id="modalTitle" class="text-xl font-bold"></h3>
+                <p id="modalDescription" class="text-gray-300 mt-1"></p>
+                <div class="flex justify-between items-center mt-3">
+                    <span id="modalCounter" class="text-gray-400"></span>
+                    <div class="flex space-x-6">
+                        <button id="likeBtn" class="text-gray-400 hover:text-red-500 transition-colors">
+                            <i class="fa fa-heart-o"></i>
+                            <span class="ml-1 text-sm">收藏</span>
+                        </button>
+                        <button id="downloadBtn" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-download"></i>
+                            <span class="ml-1 text-sm">下载</span>
+                        </button>
+                        <button id="sharePhotoBtn" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-share-alt"></i>
+                            <span class="ml-1 text-sm">分享</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-10">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-share-alt text-primary text-2xl"></i>
+                        <h2 class="text-xl font-bold">共享图册</h2>
+                    </div>
+                    <p class="text-gray-400 mt-2">轻松创建、分享和管理您的照片合集</p>
+                </div>
+                
+                <div class="flex flex-wrap justify-center gap-6 mb-6 md:mb-0">
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">关于我们</a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">使用帮助</a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">隐私政策</a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">联系客服</a>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fa fa-weixin text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fa fa-weibo text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fa fa-qq text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fa fa-envelope text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2023 共享图册 | 让美好瞬间轻松分享</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 替换为你的实际部署地址（关键修改点）
+        const BASE_URL = "https://yourusername.github.io/photo-album";
+        
+        // 图片数据
+        const photos = [
+            {
+                id: 1,
+                title: "山间日出",
+                description: "清晨在山顶等待日出的壮丽景色，2023-07-15",
+                src: "https://picsum.photos/id/10/1200/800",
+                thumbnail: "https://picsum.photos/id/10/400/300",
+                category: "自然风光",
+                // 单张图片的唯一访问路径
+                url: `${BASE_URL}/photos/1`
+            },
+            {
+                id: 2,
+                title: "家庭合影",
+                description: "在湖边的全家合影，每个人都很开心",
+                src: "https://picsum.photos/id/20/1200/800",
+                thumbnail: "https://picsum.photos/id/20/400/300",
+                category: "人物合影",
+                url: `${BASE_URL}/photos/2`
+            },
+            {
+                id: 3,
+                title: "海滩日落",
+                description: "金色的阳光洒在海面上，美不胜收",
+                src: "https://picsum.photos/id/30/1200/800",
+                thumbnail: "https://picsum.photos/id/30/400/300",
+                category: "自然风光",
+                url: `${BASE_URL}/photos/3`
+            },
+            {
+                id: 4,
+                title: "特色美食",
+                description: "当地最有名的特色小吃，味道很棒",
+                src: "https://picsum.photos/id/40/1200/800",
+                thumbnail: "https://picsum.photos/id/40/400/300",
+                category: "美食",
+                url: `${BASE_URL}/photos/4`
+            },
+            {
+                id: 5,
+                title: "古老城堡",
+                description: "欧洲中世纪的古老城堡建筑",
+                src: "https://picsum.photos/id/50/1200/800",
+                thumbnail: "https://picsum.photos/id/50/400/300",
+                category: "建筑",
+                url: `${BASE_URL}/photos/5`
+            },
+            {
+                id: 6,
+                title: "孩子们玩耍",
+                description: "孩子们在草地上追逐嬉戏",
+                src: "https://picsum.photos/id/60/1200/800",
+                thumbnail: "https://picsum.photos/id/60/400/300",
+                category: "人物合影",
+                url: `${BASE_URL}/photos/6`
+            },
+            {
+                id: 7,
+                title: "当地美食",
+                description: "在小镇餐厅品尝的传统美食",
+                src: "https://picsum.photos/id/70/1200/800",
+                thumbnail: "https://picsum.photos/id/70/400/300",
+                category: "美食",
+                url: `${BASE_URL}/photos/7`
+            },
+            {
+                id: 8,
+                title: "雪山风光",
+                description: "高耸入云的雪山，壮丽非凡",
+                src: "https://picsum.photos/id/80/1200/800",
+                thumbnail: "https://picsum.photos/id/80/400/300",
+                category: "自然风光",
+                url: `${BASE_URL}/photos/8`
+            }
+        ];
+
+        const morePhotos = [
+            {
+                id: 9,
+                title: "城市建筑",
+                description: "市中心的标志性建筑",
+                src: "https://picsum.photos/id/90/1200/800",
+                thumbnail: "https://picsum.photos/id/90/400/300",
+                category: "建筑",
+                url: `${BASE_URL}/photos/9`
+            },
+            {
+                id: 10,
+                title: "湖边野餐",
+                description: "在湖边进行的家庭野餐活动",
+                src: "https://picsum.photos/id/100/1200/800",
+                thumbnail: "https://picsum.photos/id/100/400/300",
+                category: "人物合影",
+                url: `${BASE_URL}/photos/10`
+            },
+            {
+                id: 11,
+                title: "山间小溪",
+                description: "清澈见底的山间小溪",
+                src: "https://picsum.photos/id/110/1200/800",
+                thumbnail: "https://picsum.photos/id/110/400/300",
+                category: "自然风光",
+                url: `${BASE_URL}/photos/11`
+            },
+            {
+                id: 12,
+                title: "街头美食",
+                description: "当地最具特色的街头小吃",
+                src: "https://picsum.photos/id/120/1200/800",
+                thumbnail: "https://picsum.photos/id/120/400/300",
+                category: "美食",
+                url: `${BASE_URL}/photos/12`
+            }
+        ];
+
+        // 全局变量
+        let displayedPhotos = [...photos];
+        let currentPhotoIndex = 0;
+        let moreLoaded = false;
+
+        // DOM元素获取
+        const photoGrid = document.getElementById('photoGrid');
+        const photoModal = document.getElementById('photoModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDescription = document.getElementById('modalDescription');
+        const modalCounter = document.getElementById('modalCounter');
+        const closeModal = document.getElementById('closeModal');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const likeBtn = document.getElementById('likeBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const sharePhotoBtn = document.getElementById('sharePhotoBtn');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const navbar = document.getElementById('navbar');
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        
+        // 分享相关元素
+        const shareBtn = document.getElementById('shareBtn');
+        const shareBtnMobile = document.getElementById('shareBtnMobile');
+        const shareModal = document.getElementById('shareModal');
+        const closeShareModal = document.getElementById('closeShareModal');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const copySuccess = document.getElementById('copySuccess');
+        const shareSuccessToast = document.getElementById('shareSuccessToast');
+        const sharePlatforms = document.querySelectorAll('.share-platform');
+
+        // 初始化页面
+        function init() {
+            renderPhotos(displayedPhotos);
+            setupEventListeners();
+        }
+
+        // 渲染图片网格
+        function renderPhotos(photosToRender) {
+            photoGrid.innerHTML = '';
+            
+            photosToRender.forEach((photo, index) => {
+                const photoCard = document.createElement('div');
+                photoCard.className = 'photo-card bg-white rounded-xl overflow-hidden shadow-md cursor-pointer';
+                photoCard.innerHTML = `
+                    <div class="relative overflow-hidden">
+                        <img src="${photo.thumbnail}" alt="${photo.title}" class="w-full h-56 object-cover transition-transform duration-700 hover:scale-110">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <button class="bg-white text-primary p-3 rounded-full transform translate-y-4 hover:translate-y-0 transition-transform">
+                                <i class="fa fa-search-plus"></i>
+                            </button>
+                        </div>
+                        <span class="absolute top-3 left-3 bg-primary/90 text-white text-xs px-2 py-1 rounded">${photo.category}</span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg mb-1">${photo.title}</h3>
+                        <p class="text-gray-600 text-sm line-clamp-2">${photo.description}</p>
+                    </div>
+                `;
+                
+                photoCard.addEventListener('click', () => openModal(index));
+                photoGrid.appendChild(photoCard);
+            });
+        }
+
+        // 打开图片查看器
+        function openModal(index) {
+            currentPhotoIndex = index;
+            const photo = displayedPhotos[currentPhotoIndex];
+            
+            modalImage.src = photo.src;
+            modalTitle.textContent = photo.title;
+            modalDescription.textContent = photo.description;
+            modalCounter.textContent = `${currentPhotoIndex + 1} / ${displayedPhotos.length}`;
+            
+            likeBtn.innerHTML = '<i class="fa fa-heart-o"></i><span class="ml-1 text-sm">收藏</span>';
+            
+            photoModal.classList.remove('hidden');
+            photoModal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭图片查看器
+        function closeModalFunc() {
+            photoModal.classList.add('hidden');
+            photoModal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+
+        // 查看上一张/下一张图片
+        function showPrevPhoto() {
+            currentPhotoIndex = (currentPhotoIndex - 1 + displayedPhotos.length) % displayedPhotos.length;
+            updateModalContent();
+        }
+        
+        function showNextPhoto() {
+            currentPhotoIndex = (currentPhotoIndex + 1) % displayedPhotos.length;
+            updateModalContent();
+        }
+
+        function updateModalContent() {
+            const photo = displayedPhotos[currentPhotoIndex];
+            modalImage.src = photo.src;
+            modalTitle.textContent = photo.title;
+            modalDescription.textContent = photo.description;
+            modalCounter.textContent = `${currentPhotoIndex + 1} / ${displayedPhotos.length}`;
+            
+            modalImage.classList.add('opacity-0');
+            setTimeout(() => {
+                modalImage.classList.remove('opacity-0');
+            }, 100);
+        }
+
+        // 切换喜欢状态
+        function toggleLike() {
+            const currentIcon = likeBtn.querySelector('i');
+            if (currentIcon.classList.contains('fa-heart-o')) {
+                likeBtn.innerHTML = '<i class="fa fa-heart text-red-500"></i><span class="ml-1 text-sm">已收藏</span>';
+            } else {
+                likeBtn.innerHTML = '<i class="fa fa-heart-o"></i><span class="ml-1 text-sm">收藏</span>';
+            }
+        }
+
+        // 下载图片
+        function downloadPhoto() {
+            const photo = displayedPhotos[currentPhotoIndex];
+            const a = document.createElement('a');
+            a.href = photo.src;
+            a.download = `${photo.title}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('图片开始下载');
+        }
+
+        // 分享功能（已替换为实际链接）
+        function shareSinglePhoto() {
+            const photo = displayedPhotos[currentPhotoIndex];
+            closeModalFunc();
+            openShareModal(true, photo);
+        }
+
+        function openShareModal(isSinglePhoto = false, photo = null) {
+            let shareUrl = BASE_URL; // 图册首页链接
+            
+            if (isSinglePhoto && photo) {
+                shareUrl = photo.url; // 单张图片的唯一链接
+            }
+            
+            shareModal.querySelector('input').value = shareUrl;
+            shareModal.classList.remove('hidden');
+            shareModal.classList.add('flex', 'fade-in');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeShareModalFunc() {
+            shareModal.classList.add('hidden');
+            shareModal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+
+        function copyLink() {
+            const linkInput = shareModal.querySelector('input');
+            linkInput.select();
+            document.execCommand('copy');
+            
+            copySuccess.classList.remove('hidden');
+            setTimeout(() => {
+                copySuccess.classList.add('hidden');
+            }, 2000);
+        }
+
+        // 社交平台分享（使用实际链接）
+        function shareToPlatform(platform) {
+            const link = shareModal.querySelector('input').value;
+            let shareUrl = '';
+            const title = encodeURIComponent('2023年家庭旅行记录');
+            const text = encodeURIComponent('看看我们的家庭旅行照片吧！');
+            
+            switch(platform) {
+                case 'facebook':
+                    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${link}`;
+                    break;
+                case 'twitter':
+                    shareUrl = `https://twitter.com/intent/tweet?url=${link}&text=${text}`;
+                    break;
+                case 'whatsapp':
+                    shareUrl = `https://api.whatsapp.com/send?text=${text} ${link}`;
+                    break;
+                case 'instagram':
+                    showToast('已复制链接到剪贴板，可粘贴到Instagram分享');
+                    copyLink();
+                    break;
+                case 'linkedin':
+                    shareUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${link}&title=${title}`;
+                    break;
+                case 'email':
+                    shareUrl = `mailto:?subject=${title}&body=${text} ${link}`;
+                    break;
+            }
+            
+            if (shareUrl) {
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            }
+            
+            closeShareModalFunc();
+            showShareSuccess();
+        }
+
+        // 提示功能
+        function showShareSuccess() {
+            shareSuccessToast.classList.remove('hidden');
+            shareSuccessToast.classList.add('flex');
+            
+            setTimeout(() => {
+                shareSuccessToast.classList.add('hidden');
+                shareSuccessToast.classList.remove('flex');
+            }, 3000);
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 right-6 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center z-50 fade-in';
+            toast.innerHTML = `<i class="fa fa-info-circle mr-2"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // 加载更多图片
+        function loadMorePhotos() {
+            if (!moreLoaded) {
+                loadMoreBtn.innerHTML = '<span>加载中...</span><i class="fa fa-spinner fa-spin ml-2"></i>';
+                loadMoreBtn.disabled = true;
+                
+                setTimeout(() => {
+                    displayedPhotos = [...displayedPhotos, ...morePhotos];
+                    renderPhotos(displayedPhotos);
+                    moreLoaded = true;
+                    loadMoreBtn.innerHTML = '<span>已加载全部照片</span><i class="fa fa-check ml-2"></i>';
+                    loadMoreBtn.classList.add('opacity-70', 'cursor-not-allowed');
+                }, 1000);
+            }
+        }
+
+        // 分类筛选
+        function filterByCategory(category) {
+            categoryBtns.forEach(btn => {
+                if (btn.textContent === category) {
+                    btn.classList.remove('bg-white', 'text-gray-700', 'hover:bg-primary/10');
+                    btn.classList.add('bg-primary', 'text-white');
+                } else {
+                    btn.classList.remove('bg-primary', 'text-white');
+                    btn.classList.add('bg-white', 'text-gray-700', 'hover:bg-primary/10');
+                }
+            });
+            
+            if (category === '全部') {
+                renderPhotos(displayedPhotos);
+            } else {
+                const filtered = displayedPhotos.filter(photo => photo.category === category);
+                renderPhotos(filtered);
+            }
+        }
+
+        // 事件监听
+        function setupEventListeners() {
+            // 图片查看器
+            closeModal.addEventListener('click', closeModalFunc);
+            prevBtn.addEventListener('click', showPrevPhoto);
+            nextBtn.addEventListener('click', showNextPhoto);
+            likeBtn.addEventListener('click', toggleLike);
+            downloadBtn.addEventListener('click', downloadPhoto);
+            sharePhotoBtn.addEventListener('click', shareSinglePhoto);
+            
+            // 分享功能
+            shareBtn.addEventListener('click', () => openShareModal());
+            shareBtnMobile.addEventListener('click', () => openShareModal());
+            closeShareModal.addEventListener('click', closeShareModalFunc);
+            copyLinkBtn.addEventListener('click', copyLink);
+            sharePlatforms.forEach(platform => {
+                platform.addEventListener('click', () => shareToPlatform(platform.dataset.platform));
+            });
+            
+            // 加载更多
+            loadMoreBtn.addEventListener('click', loadMorePhotos);
+            
+            // 移动端菜单
+            mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            
+            // 导航栏滚动效果
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('py-2', 'shadow-lg');
+                    navbar.classList.remove('py-3', 'shadow-md');
+                } else {
+                    navbar.classList.add('py-3', 'shadow-md');
+                    navbar.classList.remove('py-2', 'shadow-lg');
+                }
+            });
+            
+            // 分类筛选
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', () => filterByCategory(btn.textContent));
+            });
+            
+            // 键盘导航
+            document.addEventListener('keydown', (e) => {
+                if (photoModal.classList.contains('flex')) {
+                    if (e.key === 'Escape') closeModalFunc();
+                    if (e.key === 'ArrowLeft') showPrevPhoto();
+                    if (e.key === 'ArrowRight') showNextPhoto();
+                }
+            });
+            
+            // 点击背景关闭模态框
+            photoModal.addEventListener('click', (e) => {
+                if (e.target === photoModal) closeModalFunc();
+            });
+            shareModal.addEventListener('click', (e) => {
+                if (e.target === shareModal) closeShareModalFunc();
+            });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
